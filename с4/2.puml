@@ -1,0 +1,89 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+title Фриланс биржа - Диаграмма контейнеров
+
+Person(исполнитель, "Исполнитель", "Выполняет задачи")
+Person(заказчик, "Заказчик", "Создает и отслеживает заказы")
+Person(админ, "Администратор", "Модерирует пользователей и заказы")
+
+System_Boundary(c1, "Фриланс биржа") {
+    Container(web_app, "Веб-приложение", "TypeScript, React", "SPA для исполнителей и заказчиков")
+    Container(admin_panel, "Панель администратора", "TypeScript, React", "SPA для администраторов и модераторов")
+
+    Container(envoy_gateway, "API Gateway", "Envoy Proxy", "Единый шлюз для маршрутизации, балансировки и безопасности")
+
+    Container(centrifugo, "Centrifugo", "Go", "Сервер реального времени для WebSocket/Long-Polling")
+
+    Container(rabbitmq, "RabbitMQ", "Erlang", "Брокер сообщений для асинхронной обработки")
+
+    Container(order_service, "Order Service", "Go", "Управление заказами: создание, поиск, статусы")
+    Container(user_service, "User Service", "Go", "Управление пользователями и профилями")
+    Container(payment_service, "Payment Service", "Go", "Обработка платежей и финансовых операций")
+    Container(chat_service, "Chat Service", "Go", "Мессенджер для общения между пользователями")
+    Container(moderation_service, "Moderation Service", "Go", "Модерация заказов и пользователей")
+    Container(file_service, "File Service", "Go", "Управление файлами и медиа")
+
+    ContainerDb(main_db, "Основная база данных", "MySQL", "Хранит данные: пользователи, заказы, платежи, профили")
+    ContainerDb(chat_db, "База данных чатов", "Cassandra", "Хранит сообщения и историю переписок")
+    ContainerDb(file_storage, "File Storage", "MinIO/S3", "Объектное хранилище для файлов и медиа")
+}
+
+System_Ext(платежный_шлюз, "Платежный шлюз", "API")
+System_Ext(верификатор_документов, "Верификатор документов", "API")
+
+' Связи пользователей с фронтендом
+Rel(исполнитель, web_app, "Просматривает заказы, подает заявки, общается", "HTTPS")
+Rel(заказчик, web_app, "Создает заказы, нанимает исполнителей, отслеживает", "HTTPS")
+Rel(админ, admin_panel, "Модерирует контент, пользователей, заказы", "HTTPS")
+
+' Связи фронтенда с Centrifugo (WebSocket для реального времени)
+Rel(web_app, centrifugo, "WebSocket соединения", "WS/WSS")
+
+' Связи фронтенда с API Gateway (REST API)
+Rel(web_app, envoy_gateway, "Вызывает REST API", "HTTPS")
+Rel(admin_panel, envoy_gateway, "Вызывает REST API", "HTTPS")
+
+' Связи API Gateway с микросервисами
+Rel(envoy_gateway, order_service, "Маршрутизация /api/orders", "HTTP/gRPC")
+Rel(envoy_gateway, user_service, "Маршрутизация /api/users", "HTTP/gRPC")
+Rel(envoy_gateway, payment_service, "Маршрутизация /api/payments", "HTTP/gRPC")
+Rel(envoy_gateway, chat_service, "Маршрутизация /api/chat", "HTTP/gRPC")
+Rel(envoy_gateway, moderation_service, "Маршрутизация /api/moderation", "HTTP/gRPC")
+Rel(envoy_gateway, file_service, "Маршрутизация /api/files", "HTTP/gRPC")
+Rel(envoy_gateway, centrifugo, "Проксирование Centrifugo API", "HTTP")
+
+' Связи сервисов с базами данных
+Rel(order_service, main_db, "Чтение/запись данных заказов", "SQL драйвер")
+Rel(user_service, main_db, "Чтение/запись данных пользователей", "SQL драйвер")
+Rel(payment_service, main_db, "Чтение/запись финансовых данных", "SQL драйвер")
+Rel(moderation_service, main_db, "Чтение/запись данных модерации", "SQL драйвер")
+Rel(chat_service, chat_db, "Чтение/запись сообщений", "NoSQL драйвер")
+Rel(file_service, main_db, "Чтение/запись метаданных файлов", "SQL драйвер")
+Rel(file_service, file_storage, "Сохранение файлов", "S3 API")
+
+' Связи с RabbitMQ - Публикация событий
+Rel(user_service, rabbitmq, "Публикует UserDeletedEvent", "AMQP")
+Rel(payment_service, rabbitmq, "Публикует PaymentCompletedEvent", "AMQP")
+
+' Связи с RabbitMQ - Потребление событий
+Rel(rabbitmq, order_service, "Обрабатывает UserDeletedEvent", "AMQP")
+Rel(rabbitmq, chat_service, "Обрабатывает UserDeletedEvent", "AMQP")
+Rel(rabbitmq, order_service, "Обрабатывает PaymentCompletedEvent", "AMQP")
+Rel(rabbitmq, user_service, "Обрабатывает DocumentVerifiedEvent", "AMQP")
+
+' Внутренние связи между сервисами
+Rel(order_service, user_service, "Получает данные пользователей", "gRPC")
+Rel(payment_service, order_service, "Проверяет статусы заказов", "gRPC")
+Rel(chat_service, user_service, "Валидирует пользователей", "gRPC")
+Rel(chat_service, order_service, "Проверяет доступ к заказу", "gRPC")
+Rel(chat_service, centrifugo, "Публикует сообщения в каналы", "Centrifugo API")
+Rel(chat_service, file_service, "Прикрепляет файлы к сообщениям", "gRPC")
+Rel(moderation_service, file_service, "Проверяет файлы на модерацию", "gRPC")
+Rel(user_service, file_service, "Сохранение документов", "gRPC")
+
+' Внешние интеграции
+Rel(payment_service, платежный_шлюз, "Инициирует платежи, проверяет статусы", "API/HTTPS")
+Rel(moderation_service, верификатор_документов, "Отправляет документы на верификацию", "API/HTTPS")
+
+@enduml

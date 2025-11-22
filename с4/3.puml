@@ -1,0 +1,63 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Chat Service - Диаграмма компонентов (Уровень 3)
+
+Container(chat_service_container, "Chat Service", "Go", "Микросервис для общения между пользователями")
+
+System_Boundary(chat_service_boundary, "Chat Service") {
+    Component(api_handler, "API Handler", "HTTP", "Обрабатывает все REST API запросы чата")
+
+    Component(chat_service, "Chat Service", "Go", "Основная бизнес-логика и координация")
+
+    Component(chat_repository, "Chat Repository", "Go MySQL Driver", "Управление чат-комнатами и участниками")
+    Component(message_repository, "Message Repository", "Go Cassandra Driver", "Управление сообщениями")
+    Component(attachment_repository, "Attachment Repository", "Go MySQL Driver", "Управление вложениями")
+
+    Component(file_storage_adapter, "File Storage Adapter", "Go", "Адаптер для работы с файловым хранилищем")
+    Component(dispatcher, "Dispatcher", "Go", "Отправка событий в Outbox таблицу")
+
+    Component(outbox_reader, "Outbox Reader", "Go", "Чтение событий из Outbox и отправка в RabbitMQ")
+    Component(event_handler, "EventHandler", "Go", "Обработчик входящих событий из RabbitMQ")
+    Component(realtime_notification_adapter, "RealTime Notification Adapter", "Go HTTP Client", "Адаптер для Centrifugo")
+}
+
+ContainerDb(mysql_db, "MySQL", "SQL Database", "Хранилище метаданных чатов, вложений и outbox")
+ContainerDb(cassandra_db, "Cassandra", "NoSQL Database", "Хранилище сообщений")
+ContainerDb(file_storage, "File Storage", "MinIO/S3", "Объектное хранилище для файлов")
+Container(rabbitmq, "RabbitMQ", "Erlang", "Брокер сообщений")
+Container(centrifugo, "Centrifugo", "Go", "Сервер реального времени")
+
+' Связи Chat Service с репозиториями и адаптерами
+Rel(chat_service, chat_repository, "Управление комнатами", "Go calls")
+Rel(chat_service, message_repository, "Управление сообщениями", "Go calls")
+Rel(chat_service, attachment_repository, "Управление вложениями", "Go calls")
+Rel(chat_service, file_storage_adapter, "Работа с файлами", "Go calls")
+Rel(chat_service, dispatcher, "Отправка событий в outbox", "Go calls")
+
+' Связи API Handler
+Rel(api_handler, chat_service, "Вызывает операции чата", "Go calls")
+
+' Связи репозиториев с базами данных
+Rel(chat_repository, mysql_db, "Чтение/запись комнат", "SQL")
+Rel(attachment_repository, mysql_db, "Чтение/запись вложений", "SQL")
+Rel(message_repository, cassandra_db, "Чтение/запись сообщений", "CQL")
+Rel(file_storage_adapter, file_storage, "Сохранение/загрузка файлов", "S3 API")
+
+' Связи Dispatcher с Outbox (в той же MySQL)
+Rel(dispatcher, mysql_db, "Сохраняет события в outbox", "SQL")
+
+' Связи Outbox Reader
+Rel(outbox_reader, mysql_db, "Читает события из outbox", "SQL")
+Rel(outbox_reader, rabbitmq, "Отправляет события в RabbitMQ", "AMQP")
+
+' Связи EventHandler (входящие события)
+Rel(rabbitmq, event_handler, "Получает события из RabbitMQ", "AMQP")
+Rel(event_handler, chat_service, "Вызывает обработку событий", "Go calls")
+Rel(event_handler, realtime_notification_adapter, "Отправка уведомлений", "Go calls")
+
+' Связи RealTime Notification Adapter
+Rel(realtime_notification_adapter, centrifugo, "Публикация уведомлений", "HTTP API")
+
+@enduml
