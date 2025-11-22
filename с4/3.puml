@@ -16,6 +16,7 @@ System_Boundary(chat_service_boundary, "Chat Service") {
     Component(attachment_repository, "Attachment Repository", "Go MySQL Driver", "Управление вложениями")
 
     Component(file_storage_adapter, "File Storage Adapter", "Go", "Адаптер для работы с файловым хранилищем")
+    Component(user_adapter, "User Adapter", "Go gRPC Client", "Адаптер для вызовов User Service")
     Component(dispatcher, "Dispatcher", "Go", "Отправка событий в Outbox таблицу")
 
     Component(outbox_reader, "Outbox Reader", "Go", "Чтение событий из Outbox и отправка в RabbitMQ")
@@ -28,12 +29,14 @@ ContainerDb(cassandra_db, "Cassandra", "NoSQL Database", "Хранилище с�
 ContainerDb(file_storage, "File Storage", "MinIO/S3", "Объектное хранилище для файлов")
 Container(rabbitmq, "RabbitMQ", "Erlang", "Брокер сообщений")
 Container(centrifugo, "Centrifugo", "Go", "Сервер реального времени")
+Container(user_service, "User Service", "Go", "Микросервис пользователей")
 
 ' Связи Chat Service с репозиториями и адаптерами
 Rel(chat_service, chat_repository, "Управление комнатами", "Go calls")
 Rel(chat_service, message_repository, "Управление сообщениями", "Go calls")
 Rel(chat_service, attachment_repository, "Управление вложениями", "Go calls")
 Rel(chat_service, file_storage_adapter, "Работа с файлами", "Go calls")
+Rel(chat_service, user_adapter, "Валидация пользователей", "Go calls")
 Rel(chat_service, dispatcher, "Отправка событий в outbox", "Go calls")
 
 ' Связи API Handler
@@ -44,6 +47,9 @@ Rel(chat_repository, mysql_db, "Чтение/запись комнат", "SQL")
 Rel(attachment_repository, mysql_db, "Чтение/запись вложений", "SQL")
 Rel(message_repository, cassandra_db, "Чтение/запись сообщений", "CQL")
 Rel(file_storage_adapter, file_storage, "Сохранение/загрузка файлов", "S3 API")
+
+' Связи User Adapter
+Rel(user_adapter, user_service, "gRPC вызовы", "gRPC")
 
 ' Связи Dispatcher с Outbox (в той же MySQL)
 Rel(dispatcher, mysql_db, "Сохраняет события в outbox", "SQL")
