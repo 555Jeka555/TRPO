@@ -1,0 +1,214 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Deployment.puml
+
+title Фриланс биржа - Диаграмма развертывания (полная)
+
+' === KUBERNETES CLUSTER ===
+Deployment_Node(k8s_cluster, "Kubernetes Cluster", "EKS - 3 ноды") {
+
+    ' === K8S SERVICES ===
+    Deployment_Node(services_layer, "Kubernetes Services", "Service Discovery & Load Balancing") {
+        Container(order_service_svc, "order-service", "K8s Service", "ClusterIP:50051")
+        Container(user_service_svc, "user-service", "K8s Service", "ClusterIP:50052")
+        Container(payment_service_svc, "payment-service", "K8s Service", "ClusterIP:50053")
+        Container(chat_service_svc, "chat-service", "K8s Service", "ClusterIP:50054")
+        Container(moderation_service_svc, "moderation-service", "K8s Service", "ClusterIP:50055")
+        Container(file_service_svc, "file-service", "K8s Service", "ClusterIP:50056")
+        Container(centrifugo_service, "centrifugo-service", "K8s Service", "LoadBalancer:8000")
+        Container(rabbitmq_service, "rabbitmq-service", "K8s Service", "ClusterIP:5672")
+        Container(redis_service, "redis-service", "K8s Service", "ClusterIP:6379")
+    }
+
+    ' === INGRESS & GATEWAY ===
+    Deployment_Node(gateway_layer, "Gateway Layer", "ingress-nginx + envoy") {
+        Container(ingress_controller, "Ingress", "Nginx", "Входная точка")
+        Container(envoy_gateway, "API Gateway", "Envoy", "Маршрутизация API")
+    }
+
+    ' === BACKEND NODE 1 ===
+    Deployment_Node(backend_node_1, "Node 1", "k8s-node-1 | c5.xlarge") {
+        Container(frontend_pod1, "Frontend", "React", "Web + Admin")
+        Container(order_service_pod1, "Order Service", "Go", "replica 1/3")
+        Container(user_service_pod1, "User Service", "Go", "replica 1/3")
+        Container(payment_service_pod1, "Payment Service", "Go", "replica 1/3")
+        Container(chat_service_pod1, "Chat Service", "Go", "replica 1/3")
+        Container(moderation_service_pod1, "Moderation Service", "Go", "replica 1/3")
+        Container(file_service_pod1, "File Service", "Go", "replica 1/3")
+        Container(centrifugo_pod1, "Centrifugo", "Go", "replica 1/3")
+        Container(rabbitmq_pod1, "RabbitMQ Node", "Erlang", "cluster node 1/3")
+        Container(redis_pod1, "Redis Node", "Redis", "cluster node 1/3")
+    }
+
+    ' === BACKEND NODE 2 ===
+    Deployment_Node(backend_node_2, "Node 2", "k8s-node-2 | c5.xlarge") {
+        Container(frontend_pod2, "Frontend", "React", "Web + Admin")
+        Container(order_service_pod2, "Order Service", "Go", "replica 2/3")
+        Container(user_service_pod2, "User Service", "Go", "replica 2/3")
+        Container(payment_service_pod2, "Payment Service", "Go", "replica 2/3")
+        Container(chat_service_pod2, "Chat Service", "Go", "replica 2/3")
+        Container(moderation_service_pod2, "Moderation Service", "Go", "replica 2/3")
+        Container(file_service_pod2, "File Service", "Go", "replica 2/3")
+        Container(centrifugo_pod2, "Centrifugo", "Go", "replica 2/3")
+        Container(rabbitmq_pod2, "RabbitMQ Node", "Erlang", "cluster node 2/3")
+        Container(redis_pod2, "Redis Node", "Redis", "cluster node 2/3")
+    }
+
+    ' === BACKEND NODE 3 ===
+    Deployment_Node(backend_node_3, "Node 3", "k8s-node-3 | c5.xlarge") {
+        Container(frontend_pod3, "Frontend", "React", "Web + Admin")
+        Container(order_service_pod3, "Order Service", "Go", "replica 3/3")
+        Container(user_service_pod3, "User Service", "Go", "replica 3/3")
+        Container(payment_service_pod3, "Payment Service", "Go", "replica 3/3")
+        Container(chat_service_pod3, "Chat Service", "Go", "replica 3/3")
+        Container(moderation_service_pod3, "Moderation Service", "Go", "replica 3/3")
+        Container(file_service_pod3, "File Service", "Go", "replica 3/3")
+        Container(centrifugo_pod3, "Centrifugo", "Go", "replica 3/3")
+        Container(rabbitmq_pod3, "RabbitMQ Node", "Erlang", "cluster node 3/3")
+        Container(redis_pod3, "Redis Node", "Redis", "cluster node 3/3")
+    }
+}
+
+' === DATABASE LAYER - ВСЕ БАЗЫ РАСПРЕДЕЛЕНЫ ===
+Deployment_Node(db_layer, "Database Layer", "Managed Services") {
+
+    ' === MYSQL КЛАСТЕР ===
+    Deployment_Node(mysql_cluster, "MySQL Cluster", "Aurora") {
+        ContainerDb(mysql_primary, "MySQL Primary", "Aurora", "Запись | db-node-1")
+
+        Deployment_Node(db_node_2, "Database Node 2", "Физический сервер") {
+            ContainerDb(mysql_slave_1, "MySQL Slave 1", "Aurora", "Чтение | db-node-2")
+        }
+
+        Deployment_Node(db_node_3, "Database Node 3", "Физический сервер") {
+            ContainerDb(mysql_slave_2, "MySQL Slave 2", "Aurora", "Чтение | db-node-3")
+        }
+
+        Deployment_Node(db_node_4, "Database Node 4", "Физический сервер") {
+            ContainerDb(mysql_slave_3, "MySQL Slave 3", "Aurora", "Чтение | db-node-4")
+        }
+    }
+
+    ' === CASSANDRA КЛАСТЕР - ТАКЖЕ РАСПРЕДЕЛЕН ===
+    Deployment_Node(cassandra_cluster, "Cassandra Cluster", "Keyspaces") {
+        Deployment_Node(cassandra_node_1, "Cassandra Node 1", "Физический сервер") {
+            ContainerDb(cassandra_1, "Cassandra Node 1", "Cassandra", "Data Center: DC1")
+        }
+
+        Deployment_Node(cassandra_node_2, "Cassandra Node 2", "Физический сервер") {
+            ContainerDb(cassandra_2, "Cassandra Node 2", "Cassandra", "Data Center: DC1")
+        }
+
+        Deployment_Node(cassandra_node_3, "Cassandra Node 3", "Физический сервер") {
+            ContainerDb(cassandra_3, "Cassandra Node 3", "Cassandra", "Data Center: DC1")
+        }
+    }
+
+    ' === MINIO КЛАСТЕР ===
+    Deployment_Node(minio_cluster, "MinIO Cluster", "S3 Compatible") {
+        Deployment_Node(minio_node_1, "MinIO Node 1", "Физический сервер") {
+            ContainerDb(minio_1, "MinIO Node 1", "MinIO", "Storage server")
+        }
+
+        Deployment_Node(minio_node_2, "MinIO Node 2", "Физический сервер") {
+            ContainerDb(minio_2, "MinIO Node 2", "MinIO", "Storage server")
+        }
+
+        Deployment_Node(minio_node_3, "MinIO Node 3", "Физический сервер") {
+            ContainerDb(minio_3, "MinIO Node 3", "MinIO", "Storage server")
+        }
+    }
+}
+
+' === MONITORING ===
+Deployment_Node(monitoring, "Monitoring", "Отдельный namespace") {
+    Container(prometheus, "Prometheus", "Prometheus", "Сбор метрик")
+    Container(grafana, "Grafana", "Grafana", "Визуализация")
+}
+
+' === EXTERNAL SERVICES ===
+System_Ext(payment_gateway, "Payment Gateway", "External API")
+System_Ext(document_verifier, "Верификатор документов", "External API")
+System_Ext(cdn, "CDN", "CloudFront")
+
+Person(клиент, "Клиент", "Заказчик/Исполнитель")
+
+' === ПОЛНЫЕ СВЯЗИ ДЛЯ ВСЕХ СЕРВИСОВ ===
+
+' 1. Основной поток трафика
+Rel(клиент, cdn, "HTTPS")
+Rel(cdn, ingress_controller, "HTTPS")
+Rel(ingress_controller, envoy_gateway, "HTTPS")
+
+' 2. Frontend доставка
+Rel(envoy_gateway, frontend_pod1, "HTTP", "SPA delivery")
+
+' 3. API calls от Frontend через Gateway
+Rel(клиент, envoy_gateway, "API Calls", "REST/HTTPS")
+
+' 4. Gateway -> K8s Services (ВСЕ сервисы)
+Rel(envoy_gateway, order_service_svc, "gRPC", "Маршрутизация заказов")
+Rel(envoy_gateway, user_service_svc, "gRPC", "Маршрутизация пользователей")
+Rel(envoy_gateway, payment_service_svc, "gRPC", "Маршрутизация платежей")
+Rel(envoy_gateway, chat_service_svc, "gRPC", "Маршрутизация чатов")
+Rel(envoy_gateway, moderation_service_svc, "gRPC", "Маршрутизация модерации")
+Rel(envoy_gateway, file_service_svc, "gRPC", "Маршрутизация файлов")
+
+' 5. K8s Services -> Pods (load balancing)
+Rel(order_service_svc, order_service_pod1, "gRPC", "LB → order pods")
+Rel(user_service_svc, user_service_pod1, "gRPC", "LB → user pods")
+Rel(payment_service_svc, payment_service_pod1, "gRPC", "LB → payment pods")
+Rel(chat_service_svc, chat_service_pod1, "gRPC", "LB → chat pods")
+Rel(moderation_service_svc, moderation_service_pod1, "gRPC", "LB → moderation pods")
+Rel(file_service_svc, file_service_pod1, "gRPC", "LB → file pods")
+
+' 6. WebSocket - КЛИЕНТ → K8s Service → Centrifugo
+Rel(клиент, centrifugo_service, "WebSocket", "Прямое соединение через Service")
+Rel(centrifugo_service, centrifugo_pod1, "WebSocket", "LB → centrifugo pods")
+
+' 7. Backend -> MySQL (ВСЕ сервисы которые используют MySQL)
+Rel(order_service_pod1, mysql_primary, "SQL Write", "Order Service: запись")
+Rel(user_service_pod1, mysql_primary, "SQL Write", "User Service: запись")
+Rel(payment_service_pod1, mysql_primary, "SQL Write", "Payment Service: запись")
+Rel(moderation_service_pod1, mysql_primary, "SQL Write", "Moderation Service: запись")
+
+Rel(order_service_pod1, mysql_slave_1, "SQL Read", "Order Service: чтение")
+Rel(user_service_pod1, mysql_slave_1, "SQL Read", "User Service: чтение")
+Rel(payment_service_pod1, mysql_slave_1, "SQL Read", "Payment Service: чтение")
+
+' 8. Backend -> Cassandra (Chat Service)
+Rel(chat_service_pod1, cassandra_1, "CQL Write", "Chat Service: запись сообщений")
+Rel(chat_service_pod1, cassandra_2, "CQL Read", "Chat Service: чтение сообщений")
+
+' 9. Backend -> MinIO (File Service)
+Rel(file_service_pod1, minio_1, "S3 API", "File Service: хранение файлов")
+Rel(moderation_service_pod1, minio_1, "S3 API", "Moderation Service: проверка файлов")
+
+' 10. Backend -> Очереди через Service (ВСЕ сервисы)
+Rel(order_service_pod1, rabbitmq_service, "AMQP", "Order Service: события")
+Rel(user_service_pod1, rabbitmq_service, "AMQP", "User Service: события")
+Rel(payment_service_pod1, rabbitmq_service, "AMQP", "Payment Service: события")
+
+' 11. Backend -> Redis через Service (ВСЕ сервисы)
+Rel(order_service_pod1, redis_service, "Redis Protocol", "Order Service: кэш")
+Rel(user_service_pod1, redis_service, "Redis Protocol", "User Service: кэш")
+Rel(chat_service_pod1, redis_service, "Redis Protocol", "Chat Service: кэш")
+
+' 12. Кластерные связи
+Rel(rabbitmq_pod1, rabbitmq_pod2, "Erlang Distribution", "RabbitMQ cluster")
+Rel(redis_pod1, redis_pod2, "Redis Cluster", "Redis cluster")
+Rel(cassandra_1, cassandra_2, "Gossip Protocol", "Cassandra cluster")
+
+' 13. Репликация БД между разными нодами
+Rel(mysql_primary, mysql_slave_1, "Async Replication", "MySQL replication")
+Rel(mysql_primary, mysql_slave_2, "Async Replication", "MySQL replication")
+
+' 14. Внешние интеграции (ВСЕ внешние сервисы)
+Rel(payment_service_pod1, payment_gateway, "HTTPS", "Payment Service: платежи")
+Rel(moderation_service_pod1, document_verifier, "HTTPS", "Moderation Service: верификация документов")
+
+' 15. Мониторинг
+Rel(prometheus, order_service_svc, "Metrics", "Метрики order service")
+Rel(prometheus, user_service_svc, "Metrics", "Метрики user service")
+Rel(prometheus, mysql_primary, "Metrics", "Метрики БД")
+
+@enduml
