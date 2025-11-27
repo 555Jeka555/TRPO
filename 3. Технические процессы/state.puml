@@ -1,0 +1,121 @@
+@startuml
+state "ФормаЛогинации" as login
+state "Дашборд" as dashboard
+state "Профиль" as profile
+state "Баланс" as balance
+state "ПоискЗаказов" as order_search
+state "МоиЗаказы" as my_orders
+state "ИсторияЗаказов" as order_history
+
+state "РедактированиеПрофиля" as edit_profile
+
+state "ПросмотрБаланса" as view_balance
+state "ПополнениеСчета" as add_funds
+state "ВыводСредств" as withdraw_funds
+
+state "ФильтрацияЗаказов" as filter_orders
+state "ПросмотрЗаказа" as view_order
+state "БроньЗаказа" as reserve_order
+
+state "СписокМоиЗаказы" as my_orders_list
+state "СозданиеЗаказа" as create_order
+state "ДеталиМоегоЗаказа" as order_details
+state "ПроверкаБаланса" as check_balance
+state "ОшибкаБаланса" as balance_error
+state "БроньСредств" as reserve_funds
+state "РаботаНадЗаказом" as work_order
+state "ДобавлениеРешение" as add_solution
+state "ОжиданиеПроверки" as wait_review
+state "ПросмотрРешений" as view_solutions
+state "ПроверкаРешения" as review_solution
+
+state "ФормаОтзыва" as feedback_form
+state "ВводКомментария" as input_comment
+state "ВыставлениеРейтинга" as set_rating
+state "ПодтверждениеОтзыва" as confirm_feedback
+state "ПереводСредств" as transfer_funds
+
+state "ПросмотрИстории" as view_history
+state "ДеталиЗаказаИзИстории" as history_order_details
+
+[*] --> login
+login --> dashboard : Успешная авторизация
+
+dashboard --> profile : Нажал "Профиль"
+dashboard --> balance : Нажал "Баланс"
+dashboard --> order_search : Нажал "Найти заказы"
+dashboard --> my_orders : Нажал "Мои заказы"
+dashboard --> order_history : Нажал "История"
+
+profile --> dashboard : Нажал "Назад"
+balance --> dashboard : Нажал "Назад"
+order_search --> dashboard : Нажал "Назад"
+my_orders --> dashboard : Нажал "Назад"
+order_history --> dashboard : Нажал "Назад"
+
+' Профиль
+profile --> edit_profile : Нажал "Редактировать"
+edit_profile --> profile : Сохранил изменения
+
+' Баланс
+balance --> view_balance : Автоматический переход
+view_balance --> add_funds : Нажал "Пополнить"
+view_balance --> withdraw_funds : Нажал "Вывести"
+add_funds --> view_balance : Завершил пополнение
+withdraw_funds --> view_balance : Отправил запрос на вывод
+view_balance --> balance : Нажал "Назад"
+
+' Поиск заказов
+order_search --> filter_orders : Автоматический переход
+filter_orders --> view_order : Выбрал заказ из списка
+view_order --> reserve_order : Нажал "Взять заказ"
+view_order --> filter_orders : Нажал "Назад к списку"
+reserve_order --> my_orders : Успешная бронь
+reserve_order --> filter_orders : Отменил бронь
+filter_orders --> order_search : Нажал "Назад"
+
+' Мои заказы
+my_orders --> my_orders_list : Автоматический переход
+my_orders_list --> create_order : Нажал "Создать заказ"
+my_orders_list --> order_details : Выбрал заказ из списка
+create_order --> check_balance : Нажал "Опубликовать"
+check_balance --> balance_error : Недостаточно средств
+check_balance --> reserve_funds : Средства заблокированы
+reserve_funds --> my_orders_list : Заказ опубликован
+balance_error --> balance : Нажал "Пополнить баланс"
+
+order_details --> work_order : Нажал "Работать над заказом"
+order_details --> view_solutions : Нажал "Просмотреть решения"
+order_details --> my_orders_list : Нажал "Назад"
+
+work_order --> add_solution : Нажал "Добавить решение"
+add_solution --> wait_review : Нажал "Отправить на проверку"
+add_solution --> work_order : Нажал "Сохранить черновик"
+wait_review --> my_orders_list : Нажал "К списку заказов"
+
+view_solutions --> review_solution : Выбрал решение для проверки
+review_solution --> feedback_form : Нажал "Завершить заказ"
+my_orders_list --> my_orders : Нажал "Назад"
+
+' Форма отзыва
+feedback_form --> input_comment : Автоматический переход
+input_comment --> set_rating : Нажал "Далее"
+input_comment --> feedback_form : Нажал "Отмена"
+set_rating --> confirm_feedback : Нажал "Продолжить"
+set_rating --> input_comment : Нажал "Назад"
+confirm_feedback --> transfer_funds : Нажал "Подтвердить" (для заказчика)
+confirm_feedback --> feedback_form : Нажал "Изменить отзыв"
+transfer_funds --> feedback_form : Средства переведены
+
+' История заказов
+order_history --> view_history : Автоматический переход
+view_history --> history_order_details : Выбрал заказ из истории
+history_order_details --> feedback_form : Нажал "Оставить отзыв"
+history_order_details --> view_history : Нажал "Назад"
+view_history --> order_history : Нажал "Назад"
+
+' Возвраты в дашборд
+feedback_form --> dashboard : Нажал "В дашборд"
+wait_review --> dashboard : Нажал "В дашборд"
+transfer_funds --> dashboard : Нажал "В дашборд"
+@enduml
