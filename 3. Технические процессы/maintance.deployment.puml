@@ -1,0 +1,160 @@
+@startuml
+title Фриланс биржа - Maintenance & Deployment Processes
+
+skinparam defaultFontName Arial
+skinparam defaultFontSize 12
+
+' === CI/CD PIPELINE ===
+card "CI/CD Pipeline" {
+  card "Development" {
+    card "GitLab/GitHub" as git
+    card "Developers" as devs
+    card "Docker Build" as build
+    card "Unit Tests" as unit_tests
+    card "Security Scan" as security
+    card "Integration Tests" as integration
+    card "E2E Tests" as e2e
+    card "Performance Tests" as perf
+  }
+
+  card "Staging" {
+    card "Deploy to Staging" as staging_deploy
+    card "Smoke Tests" as smoke
+    card "API Tests" as api_tests
+  }
+
+  card "Production" {
+    card "Canary Release" as canary
+    card "Blue-Green Deployment" as bluegreen
+    card "Rollback Procedure" as rollback
+    database "Production Kubernetes" as k8s_prod
+  }
+}
+
+' === MONITORING & OBSERVABILITY ===
+card "Monitoring & Observability" {
+  card "Prometheus" as prometheus
+  card "Node Exporter" as node_exporter
+  card "Application Metrics" as app_metrics
+  card "Loki" as loki
+  card "FluentBit" as fluentbit
+  card "AlertManager" as alertmanager
+  card "Slack Notifications" as slack
+  card "Grafana Dashboards" as grafana
+}
+
+' === MAINTENANCE PROCEDURES ===
+card "Maintenance Procedures" {
+  card "Daily Backups" as backups
+  card "MySQL Replication Check" as replication
+  card "Cassandra Repair" as cassandra_repair
+  card "SSL Certificate Renewal" as ssl
+  card "Security Patches" as patches
+  card "Horizontal Pod Autoscaler" as hpa
+  card "Cluster Autoscaler" as cluster_auto
+  card "Backup Restoration" as restore
+  card "Failover Procedures" as failover
+  card "Incident Response" as incident
+}
+
+' === AUTOMATION ===
+card "Automation" {
+  card "GitOps - ArgoCD" as argocd
+  card "Terraform" as terraform
+  card "Ansible" as ansible
+  card "Scheduled Jobs" as cron
+}
+
+' === SERVICE LEVEL INDICATORS ===
+card "Service Level Indicators" {
+  card "Availability: 99.9%" as availability
+  card "Latency: <200ms" as latency
+  card "Error Rate: <0.1%" as error_rate
+  card "Throughput: 1000 RPS" as throughput
+}
+
+' === ROLLBACK PROCESS ===
+card "Rollback Process" {
+  card "Detect Issue" as detect
+  card "Stop Traffic" as stop_traffic
+  card "Revert to Previous Version" as revert
+  card "Verify Rollback" as verify
+  card "Post-Mortem" as postmortem
+}
+
+' === СВЯЗИ CI/CD ===
+devs --> git
+git --> build
+build --> unit_tests
+unit_tests --> security
+security --> integration
+integration --> e2e
+e2e --> perf
+perf --> staging_deploy
+staging_deploy --> smoke
+smoke --> api_tests
+api_tests --> canary
+canary --> bluegreen
+bluegreen --> k8s_prod
+bluegreen --> rollback
+
+' === СВЯЗИ МОНИТОРИНГА ===
+k8s_prod --> prometheus
+prometheus --> grafana
+app_metrics --> prometheus
+node_exporter --> prometheus
+fluentbit --> loki
+loki --> grafana
+prometheus --> alertmanager
+alertmanager --> slack
+
+' === СВЯЗИ ОБСЛУЖИВАНИЯ ===
+prometheus --> hpa
+hpa --> k8s_prod
+cluster_auto --> k8s_prod
+backups --> k8s_prod
+backups --> restore
+ssl --> k8s_prod
+patches --> k8s_prod
+
+' === СВЯЗИ АВТОМАТИЗАЦИИ ===
+argocd --> k8s_prod
+terraform --> k8s_prod
+cron --> backups
+
+' === СВЯЗИ METRICS ===
+prometheus --> availability
+prometheus --> latency
+prometheus --> error_rate
+prometheus --> throughput
+
+' === СВЯЗИ ROLLBACK ===
+alertmanager --> detect
+detect --> stop_traffic
+stop_traffic --> revert
+revert --> verify
+verify --> postmortem
+postmortem --> git
+
+' === ПРОЦЕДУРЫ ВОССТАНОВЛЕНИЯ ===
+alertmanager --> incident
+incident --> failover
+failover --> restore
+
+note right of k8s_prod
+  <b>Production Environment</b>
+  • 3 Kubernetes nodes
+  • MySQL cluster + replicas
+  • Cassandra cluster
+  • RabbitMQ cluster
+  • Redis cluster
+end note
+
+note left of prometheus
+  <b>Monitoring Stack</b>
+  • Metrics scraping every 15s
+  • Alert rules for SLIs
+  • Retention: 30 days
+end note
+
+@enduml
