@@ -127,7 +127,7 @@ Deployment_Node(monitoring, "Monitoring", "Отдельный namespace") {
 
 ' === EXTERNAL SERVICES ===
 System_Ext(payment_gateway, "Payment Gateway", "External API")
-System_Ext(document_verifier, "Верификатор документов", "External API")
+System_Ext(document_verifier, "Document Verifier", "External API")
 System_Ext(cdn, "CDN", "CloudFront")
 
 Person(клиент, "Клиент", "Заказчик/Исполнитель")

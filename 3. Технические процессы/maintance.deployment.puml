@@ -31,6 +31,15 @@ card "CI/CD Pipeline" {
   }
 }
 
+' === КОММЕНТАРИИ ДЛЯ CI/CD PIPELINE ===
+note left of canary
+  <b>Canary-развертывание</b>
+  • Постепенный выпуск
+  • Сначала 10% пользователей
+  • Мониторинг метрик
+  • Автоматический откат при проблемах
+end note
+
 ' === MONITORING & OBSERVABILITY ===
 card "Monitoring & Observability" {
   card "Prometheus" as prometheus
@@ -42,6 +51,71 @@ card "Monitoring & Observability" {
   card "Slack Notifications" as slack
   card "Grafana Dashboards" as grafana
 }
+
+' === КОММЕНТАРИИ ДЛЯ MONITORING ===
+note right of prometheus
+  <b>Сбор метрик</b>
+  • Хранение временных рядов
+  • Сбор данных каждые 15 сек
+  • Мониторинг сервисов
+  • Создание алертов
+end note
+
+note left of node_exporter
+  <b>Метрики серверов</b>
+  • CPU, память, диск
+  • Сетевая статистика
+  • Нагрузка системы
+  • Использование ресурсов
+end note
+
+note right of app_metrics
+  <b>Метрики приложений</b>
+  • Бизнес-метрики
+  • Производительность сервисов
+  • Пользовательская активность
+  • Кастомные показатели
+end note
+
+note left of loki
+  <b>Система логов</b>
+  • Централизованное хранение
+  • Поиск по логам
+  • Агрегация всех сервисов
+  • 45 дней хранения
+end note
+
+note right of fluentbit
+  <b>Сбор логов</b>
+  • Легковесный агент
+  • Парсинг и обогащение логов
+  • Отправка в Loki
+  • Работа в Kubernetes
+end note
+
+note left of alertmanager
+  <b>Управление оповещениями</b>
+  • Группировка алертов
+  • Дедублирование
+  • Маршрутизация уведомлений
+  • Политики эскалации
+end note
+
+note right of slack
+  <b>Уведомления в Slack</b>
+  • Мгновенные оповещения
+  • Каналы для команд
+  • Подтверждение получения
+  • История инцидентов
+end note
+
+note left of grafana
+  <b>Дашборды Grafana</b>
+  • Визуализация метрик
+  • Мониторинг в реальном времени
+  • Анализ трендов
+  • Отчеты для руководства
+end note
 
 ' === MAINTENANCE PROCEDURES ===
 card "Maintenance Procedures" {
@@ -57,6 +131,76 @@ card "Maintenance Procedures" {
   card "Incident Response" as incident
 }
 
+' === КОММЕНТАРИИ ДЛЯ MAINTENANCE ===
+note left of replication
+  <b>Проверка репликации MySQL</b>
+  • Здоровье реплик
+  • Автоматический failover
+  • Восстановление репликации
+end note
+
+note right of cassandra_repair
+  <b>Обслуживание Cassandra</b>
+  • Восстановление консистентности
+  • Удаление tombstone'ов
+  • Балансировка данных
+  • Оптимизация производительности
+end note
+
+note left of ssl
+  <b>Обновление SSL сертификатов</b>
+  • Автоматическое продление
+  • Let's Encrypt интеграция
+  • Безопасность соединений
+end note
+
+note right of patches
+  <b>Обновления безопасности</b>
+  • Патчи ОС
+  • Обновления зависимостей
+  • Исправления уязвимостей
+  • Регулярное применение
+end note
+
+note left of hpa
+  <b>Горизонтальное масштабирование</b>
+  • Автоматическое добавление подов
+  • На основе нагрузки CPU/RAM
+  • Кастомные метрики
+  • Контроль стоимости
+end note
+
+note right of cluster_auto
+  <b>Масштабирование кластера</b>
+  • Добавление нод при нехватке
+  • Использование spot-инстансов
+  • Оптимизация ресурсов
+  • Балансировка нагрузки
+end note
+
+note left of restore
+  <b>Восстановление из бэкапов</b>
+  • Тестовые восстановления
+  • Аварийное восстановление
+  • Проверка целостности
+  • Минимизация простоя
+end note
+
+note right of failover
+  <b>Процедуры переключения</b>
+  • Автоматический failover
+  • Сохранение сессий
+  • Восстановление работы
+end note
+
+note left of incident
+  <b>Реагирование на инциденты</b>
+  • Процедуры устранения
+  • Коммуникация команд
+  • Эскалация проблем
+  • Декомпозиция инцидентов
+end note
+
 ' === AUTOMATION ===
 card "Automation" {
   card "GitOps - ArgoCD" as argocd
@@ -65,6 +209,39 @@ card "Automation" {
   card "Scheduled Jobs" as cron
 }
 
+' === КОММЕНТАРИИ ДЛЯ AUTOMATION ===
+note right of argocd
+  <b>GitOps автоматизация</b>
+  • Декларативное управление
+  • Синхронизация с git
+  • Автоматические развертывания
+  • Визуализация состояния
+end note
+
+note left of terraform
+  <b>Инфраструктура как код</b>
+  • Управление облачными ресурсами
+  • Воспроизводимость окружений
+  • Контроль изменений
+  • Безопасность и политики
+end note
+
+note right of ansible
+  <b>Управление конфигурациями</b>
+  • Настройка серверов
+  • Установка ПО
+  • Обновления безопасности
+  • Стандартизация окружений
+end note
+
+note left of cron
+  <b>Планировщик задач</b>
+  • Регулярные maintenance jobs
+  • Генерация отчетов
+  • Очистка временных данных
+  • Архивация логов
+end note
+
 ' === SERVICE LEVEL INDICATORS ===
 card "Service Level Indicators" {
   card "Availability: 99.9%" as availability
@@ -72,6 +249,38 @@ card "Service Level Indicators" {
   card "Error Rate: <0.1%" as error_rate
   card "Throughput: 1000 RPS" as throughput
 }
+
+' === КОММЕНТАРИИ ДЛЯ SERVICE LEVEL INDICATORS ===
+note right of availability
+  <b>Доступность 99.9%</b>
+  • 8.76 часов простоя в год
+  • Мониторинг uptime
+  • SLA для пользователей
+end note
+
+note left of latency
+  <b>Задержка < 200ms</b>
+  • 95-й перцентиль времени ответа
+  • Мониторинг производительности
+  • Оптимизация запросов
+  • Кэширование данных
+end note
+
+note right of error_rate
+  <b>Уровень ошибок < 0.1%</b>
+  • Мониторинг HTTP статусов
+  • Бизнес-логические ошибки
+  • Ошибки зависимостей
+  • Качество сервиса
+end note
+
+note left of throughput
+  <b>Пропускная способность 1000 RPS</b>
+  • Обработка 1000 запросов/сек
+  • Масштабируемость архитектуры
+  • Балансировка нагрузки
+  • Оптимизация БД
+end note
 
 ' === ROLLBACK PROCESS ===
 card "Rollback Process" {
@@ -82,6 +291,52 @@ card "Rollback Process" {
   card "Post-Mortem" as postmortem
 }
 
+note right of detect
+  <b>Обнаружение проблем</b>
+  Автоматический мониторинг метрик:
+  • Рост ошибок > 1%
+  • Увеличение задержек > 500ms
+  • Падение доступности сервиса
+  • Аномалии в бизнес-метриках
+  Источники: Prometheus, health checks
+end note
+
+note left of stop_traffic
+  <b>Остановка трафика</b>
+  Прекращение подачи трафика на проблемную версию:
+  • Обновление правил Ingress/Envoy
+  • Graceful drain соединений (30 сек)
+  • Перенаправление на стабильную версию
+  • Сохранение сессий пользователей
+end note
+
+note right of revert
+  <b>Возврат к предыдущей версии</b>
+  Автоматический откат развертывания:
+  • kubectl rollout undo deployment/
+  • Откат миграций БД (если нужно)
+  • Восстановление конфигураций
+  • Проверка совместимости версий
+end note
+
+note left of verify
+  <b>Проверка отката</b>
+  Подтверждение успешности восстановления:
+  • Health checks всех сервисов
+  • Тестирование ключевых сценариев
+  • Мониторинг метрик после отката
+  • Проверка пользовательского опыта
+end note
+
+note right of postmortem
+  <b>Анализ инцидента</b>
+  Пост-мортем для предотвращения повтора:
+  • Анализ root cause проблемы
+  • Построение временной линии
+  • Создание improvement items
+  • Обновление документации
+  • Обучение команды
+end note
 ' === СВЯЗИ CI/CD ===
 devs --> git
 git --> build
@@ -148,13 +403,6 @@ note right of k8s_prod
   • Cassandra cluster
   • RabbitMQ cluster
   • Redis cluster
-end note
-
-note left of prometheus
-  <b>Monitoring Stack</b>
-  • Metrics scraping every 15s
-  • Alert rules for SLIs
-  • Retention: 30 days
 end note
 
 @enduml
